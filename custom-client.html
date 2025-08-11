@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reddit Client</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: sans-serif;
+        background-color: #f8f9fa;
+        color: #1a1a1b;
+        line-height: 1.4;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #ff4500 0%, #ff6b35 100%);
+        color: white;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+      }
+
+      .auth-section {
+        text-align: center;
+        padding: 3rem 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .auth-section h2 {
+        margin-bottom: 1rem;
+        color: #1a1a1b;
+      }
+
+      .auth-section p {
+        margin-bottom: 2rem;
+        color: #666;
+      }
+
+      .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+      }
+
+      .btn-primary {
+        background: #ff4500;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #cc3700;
+      }
+
+      .btn-secondary {
+        background: #e9ecef;
+        color: #495057;
+        margin-left: 0.5rem;
+      }
+
+      .btn-secondary:hover {
+        background: #dee2e6;
+      }
+
+      .btn-danger {
+        background: #dc3545;
+        color: white;
+      }
+
+      .btn-danger:hover {
+        background: #c82333;
+      }
+
+      .feeds-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+      }
+
+      .feeds-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+
+      .feeds-header h2 {
+        color: #1a1a1b;
+      }
+
+      .feed-item {
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #fff;
+      }
+
+      .feed-item:hover {
+        border-color: #ff4500;
+        box-shadow: 0 2px 8px rgba(255, 69, 0, 0.15);
+        background: #fefefe;
+      }
+
+      .feed-item:active {
+        transform: translateY(1px);
+      }
+
+      .feed-name {
+        font-weight: 600;
+        color: #1a1a1b;
+        margin-bottom: 0.25rem;
+      }
+
+      .feed-details {
+        color: #666;
+        font-size: 0.875rem;
+      }
+
+      .no-feeds {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #666;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+      }
+
+      .spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e9ecef;
+        border-radius: 50%;
+        border-top-color: #ff4500;
+        animation: spin 1s linear infinite;
+        margin-right: 0.5rem;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+        padding: 1rem;
+        border-radius: 6px;
+        margin: 1rem 0;
+        border: 1px solid #f5c6cb;
+      }
+
+      .posts-container {
+        margin-top: 2rem;
+      }
+
+      .posts-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .posts-header h3 {
+        color: #1a1a1b;
+        margin: 0;
+      }
+
+      .back-btn {
+        background: #6c757d;
+        color: white;
+      }
+
+      .back-btn:hover {
+        background: #545b62;
+      }
+
+      .post-item {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-left: 3px solid #ff4500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .post-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+      }
+
+      .post-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #1a1a1b;
+      }
+
+      .post-meta {
+        color: #666;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .post-content {
+        color: #666;
+        font-size: 0.875rem;
+      }
+
+      .posts-loading {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #666;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 1rem 0.5rem;
+        }
+
+        .feeds-header {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .posts-header {
+          flex-direction: column;
+          gap: 1rem;
+          text-align: center;
+        }
+
+        .btn {
+          margin: 0.25rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>Read-Only Reddit Research Client</h1>
+    </div>
+
+    <div class="container">
+      <!-- Authentication Section -->
+      <div id="auth-section" class="auth-section">
+        <h2>Connect to Reddit</h2>
+        <p>
+          Connect your Reddit account to view your custom feeds and browse
+          content.
+        </p>
+        <div
+          id="setup-instructions"
+          style="
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            text-align: left;
+            font-size: 0.875rem;
+          "
+        >
+          <strong>Setup Required:</strong>
+          <ol style="margin: 0.5rem 0; padding-left: 1.5rem">
+            <li>
+              Replace 'YOUR_CLIENT_ID' in the code with your Reddit app client
+              ID
+            </li>
+            <li>
+              In Reddit app settings, set redirect URI to:
+              <code
+                id="current-url"
+                style="
+                  background: #f8f9fa;
+                  padding: 2px 4px;
+                  border-radius: 3px;
+                "
+              ></code>
+            </li>
+            <li>
+              Create a Reddit app at:
+              <a href="https://www.reddit.com/prefs/apps" target="_blank"
+                >reddit.com/prefs/apps</a
+              >
+            </li>
+          </ol>
+        </div>
+        <button id="connect-btn" class="btn btn-primary">
+          Connect Reddit Account
+        </button>
+      </div>
+
+      <!-- Feeds Section -->
+      <div id="feeds-section" class="feeds-container" style="display: none">
+        <div class="feeds-header">
+          <h2>Your Custom Feeds</h2>
+          <div>
+            <button id="refresh-btn" class="btn btn-primary">Refresh</button>
+            <button id="disconnect-btn" class="btn btn-danger">
+              Disconnect
+            </button>
+          </div>
+        </div>
+        <div id="feeds-list"></div>
+      </div>
+
+      <!-- Posts Section -->
+      <div id="posts-section" class="posts-container" style="display: none">
+        <div class="posts-header">
+          <div>
+            <h3 id="posts-title">Feed Content</h3>
+            <div
+              id="last-refresh-time"
+              style="color: #666; font-size: 0.75rem; margin-top: 0.25rem"
+            ></div>
+          </div>
+          <div>
+            <button id="refresh-posts-btn" class="btn btn-primary">
+              Refresh
+            </button>
+            <button id="toggle-polling-btn" class="btn btn-primary">
+              Auto-refresh
+            </button>
+            <button id="back-btn" class="btn back-btn">← Back to Feeds</button>
+          </div>
+        </div>
+        <div id="posts-list"></div>
+      </div>
+    </div>
+
+    <script>
+      class RedditClient {
+        constructor() {
+          this.clientId = "i3It5V7LR6o2s5BCTy-82A"; // Replace with your Reddit app client ID
+          this.redirectUri = window.location.origin + window.location.pathname;
+          this.backendUrl = "http://192.168.1.79:3001"; // Backend server URL (Change to localhost:3000 if desktop / computer IP if mobile)
+          this.scope = "read mysubreddits";
+          this.accessToken = localStorage.getItem("reddit_access_token");
+          this.currentFeedPath = null;
+          this.currentFeedName = null;
+          this.pollInterval = null;
+          this.pollingEnabled = false;
+          this.lastUpdateTime = null;
+
+          this.init();
+        }
+
+        init() {
+          this.bindEvents();
+          this.checkAuthStatus();
+          this.handleOAuthCallback();
+          this.showCurrentUrl();
+        }
+
+        showCurrentUrl() {
+          const urlElement = document.getElementById("current-url");
+          if (urlElement) {
+            urlElement.textContent = this.redirectUri;
+          }
+        }
+
+        bindEvents() {
+          document
+            .getElementById("connect-btn")
+            .addEventListener("click", () => this.startOAuth());
+          document
+            .getElementById("refresh-btn")
+            .addEventListener("click", () => this.loadFeeds());
+          document
+            .getElementById("disconnect-btn")
+            .addEventListener("click", () => this.disconnect());
+          document
+            .getElementById("back-btn")
+            .addEventListener("click", () => this.showFeedsOnly());
+          document
+            .getElementById("refresh-posts-btn")
+            .addEventListener("click", () => this.refreshCurrentFeed());
+          document
+            .getElementById("toggle-polling-btn")
+            .addEventListener("click", () => this.togglePolling());
+        }
+
+        checkAuthStatus() {
+          if (this.accessToken) {
+            this.showFeedsSection();
+            this.loadFeeds();
+          } else {
+            this.showAuthSection();
+          }
+        }
+
+        handleOAuthCallback() {
+          const urlParams = new URLSearchParams(window.location.search);
+          const code = urlParams.get("code");
+          const error = urlParams.get("error");
+          const state = urlParams.get("state");
+
+          console.log(
+            "OAuth callback - Code:",
+            code,
+            "Error:",
+            error,
+            "State:",
+            state,
+          );
+
+          if (error) {
+            this.showError("Authentication failed: " + error);
+            return;
+          }
+
+          if (code) {
+            console.log("Found OAuth code, exchanging for token...");
+            this.exchangeCodeForToken(code);
+          } else {
+            console.log("No OAuth code found in URL");
+          }
+        }
+
+        startOAuth() {
+          const state = Math.random().toString(36).substring(7);
+          localStorage.setItem("oauth_state", state);
+
+          const authUrl =
+            "https://www.reddit.com/api/v1/authorize?" +
+            new URLSearchParams({
+              client_id: this.clientId,
+              response_type: "code",
+              state: state,
+              redirect_uri: this.redirectUri,
+              duration: "permanent",
+              scope: this.scope,
+            });
+
+          window.location.href = authUrl;
+        }
+
+        async exchangeCodeForToken(code) {
+          console.log("Starting token exchange with code:", code);
+          this.showFeedsSection();
+          this.showLoading("Authenticating...");
+
+          try {
+            console.log("Exchanging code via backend server...");
+
+            const response = await fetch(`${this.backendUrl}/oauth/token`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                code: code,
+                redirect_uri: this.redirectUri,
+              }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(
+                `Backend error: ${errorData.error} - ${
+                  errorData.message || ""
+                }`,
+              );
+            }
+
+            const data = await response.json();
+            console.log("Token exchange successful:", data);
+
+            if (data.access_token) {
+              this.accessToken = data.access_token;
+              localStorage.setItem("reddit_access_token", this.accessToken);
+              if (data.refresh_token) {
+                localStorage.setItem(
+                  "reddit_refresh_token",
+                  data.refresh_token,
+                );
+              }
+
+              // Clean up URL
+              window.history.replaceState(
+                {},
+                document.title,
+                window.location.pathname,
+              );
+
+              this.loadFeeds();
+            } else {
+              throw new Error("No access token received from backend");
+            }
+          } catch (error) {
+            console.error("Token exchange error:", error);
+
+            if (error.message.includes("fetch")) {
+              this.showError(`
+                                  <strong>Backend Server Not Running:</strong><br>
+                                  Make sure the backend server is running on ${this.backendUrl}<br><br>
+                                  <strong>To start the backend:</strong><br>
+                                  1. Save the server.js file<br>
+                                  2. Run: <code>npm install</code><br>
+                                  3. Run: <code>npm start</code><br><br>
+                                  <button onclick="redditClient.useDemoMode()" class="btn btn-secondary">Use Demo Mode</button>
+                              `);
+            } else {
+              this.showError(`Authentication failed: ${error.message}<br><br>
+                                  <button onclick="redditClient.useDemoMode()" class="btn btn-secondary">Use Demo Mode</button>`);
+            }
+          }
+        }
+
+        async loadFeeds() {
+          if (!this.accessToken) return;
+
+          this.showLoading("Loading your feeds...");
+
+          try {
+            const response = await fetch(
+              `${this.backendUrl}/api/reddit/api/multi/mine`,
+              {
+                headers: {
+                  Authorization: "Bearer " + this.accessToken,
+                },
+              },
+            );
+
+            if (!response.ok) {
+              throw new Error("Failed to fetch feeds");
+            }
+
+            const feeds = await response.json();
+            this.displayFeeds(feeds);
+          } catch (error) {
+            console.error("Feed loading error:", error);
+            this.showError(
+              "Failed to load feeds: " +
+                error.message +
+                '<br><br><button onclick="redditClient.useDemoMode()" class="btn btn-secondary">Use Demo Mode</button>',
+            );
+          }
+        }
+
+        async loadFeedPosts(feedPath, feedName) {
+          if (!this.accessToken) return;
+
+          // Store current feed info for polling
+          this.currentFeedPath = feedPath;
+          this.currentFeedName = feedName;
+
+          // Show posts section and loading
+          this.showPostsSection(feedName);
+          this.showPostsLoading("Loading posts...");
+
+          try {
+            // Remove leading slash if present and add .json
+            const cleanPath = feedPath.startsWith("/")
+              ? feedPath.slice(1)
+              : feedPath;
+            const jsonPath = cleanPath.endsWith(".json")
+              ? cleanPath
+              : cleanPath + ".json";
+
+            const response = await fetch(
+              `${this.backendUrl}/api/reddit/${jsonPath}`,
+              {
+                headers: {
+                  Authorization: "Bearer " + this.accessToken,
+                },
+              },
+            );
+
+            if (!response.ok) {
+              throw new Error("Failed to fetch posts");
+            }
+
+            const data = await response.json();
+            this.displayPosts(data.data.children);
+            this.lastUpdateTime = new Date();
+            this.updateLastRefreshTime();
+          } catch (error) {
+            this.showPostsError("Failed to load posts: " + error.message);
+          }
+        }
+
+        displayFeeds(feeds) {
+          const feedsList = document.getElementById("feeds-list");
+          feedsList.innerHTML = "";
+
+          if (!feeds || feeds.length === 0) {
+            feedsList.innerHTML =
+              '<div class="no-feeds"><p>No custom feeds found. Create some multireddits on Reddit first!</p></div>';
+            return;
+          }
+
+          feeds.forEach((feed) => {
+            const feedItem = document.createElement("div");
+            feedItem.className = "feed-item";
+
+            // Decode HTML entities in feed name and description
+            const feedName = this.decodeHtml(feed.data.display_name);
+            const subredditCount = feed.data.subreddits.length;
+
+            feedItem.innerHTML = `
+                              <div class="feed-name">${feedName}</div>
+                              <div class="feed-details">${subredditCount} subreddits</div>
+                          `;
+
+            feedItem.addEventListener("click", () => {
+              this.loadFeedPosts(feed.data.path, feedName);
+            });
+
+            feedsList.appendChild(feedItem);
+          });
+        }
+
+        displayPosts(posts) {
+          const postsList = document.getElementById("posts-list");
+          postsList.innerHTML = "";
+
+          if (!posts || posts.length === 0) {
+            postsList.innerHTML =
+              '<div class="no-feeds"><p>No posts found in this feed.</p></div>';
+            return;
+          }
+
+          posts.forEach((post) => {
+            const postData = post.data;
+            const postItem = document.createElement("div");
+            postItem.className = "post-item";
+
+            // Decode HTML entities in title and content
+            const title = this.decodeHtml(postData.title);
+            const selftext = postData.selftext
+              ? this.decodeHtml(postData.selftext)
+              : "";
+
+            const postContent = selftext
+              ? `<div class="post-content">${selftext.substring(0, 200)}${
+                  selftext.length > 200 ? "..." : ""
+                }</div>`
+              : "";
+
+            postItem.innerHTML = `
+                              <div class="post-title">${title}</div>
+                              <div class="post-meta">
+                                  r/${postData.subreddit} • ${postData.ups} upvotes • ${postData.num_comments} comments
+                              </div>
+                              ${postContent}
+                          `;
+
+            postItem.addEventListener("click", () => {
+              window.open(`https://reddit.com${postData.permalink}`, "_blank");
+            });
+
+            postsList.appendChild(postItem);
+          });
+        }
+
+        showAuthSection() {
+          document.getElementById("auth-section").style.display = "block";
+          document.getElementById("feeds-section").style.display = "none";
+          document.getElementById("posts-section").style.display = "none";
+        }
+
+        showFeedsSection() {
+          document.getElementById("auth-section").style.display = "none";
+          document.getElementById("feeds-section").style.display = "block";
+          document.getElementById("posts-section").style.display = "none";
+        }
+
+        showFeedsOnly() {
+          document.getElementById("posts-section").style.display = "none";
+          document.getElementById("feeds-section").style.display = "block";
+          this.stopPolling();
+        }
+
+        showPostsSection(feedName) {
+          document.getElementById("posts-section").style.display = "block";
+          document.getElementById("feeds-section").style.display = "none";
+          document.getElementById("posts-title").textContent =
+            feedName || "Feed Content";
+          this.updateLastRefreshTime();
+        }
+
+        showLoading(message) {
+          const feedsList = document.getElementById("feeds-list");
+          feedsList.innerHTML = `<div class="loading"><span class="spinner"></span>${message}</div>`;
+        }
+
+        showPostsLoading(message) {
+          const postsList = document.getElementById("posts-list");
+          postsList.innerHTML = `<div class="posts-loading"><span class="spinner"></span>${message}</div>`;
+        }
+
+        showError(message) {
+          const feedsList = document.getElementById("feeds-list");
+          feedsList.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        showPostsError(message) {
+          const postsList = document.getElementById("posts-list");
+          postsList.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        disconnect() {
+          localStorage.removeItem("reddit_access_token");
+          localStorage.removeItem("reddit_refresh_token");
+          this.accessToken = null;
+          this.stopPolling();
+          this.showAuthSection();
+        }
+
+        // Helper function to decode HTML entities
+        decodeHtml(html) {
+          if (!html) return "";
+          const txt = document.createElement("textarea");
+          txt.innerHTML = html;
+          return txt.value;
+        }
+
+        // Polling functionality
+        startPolling() {
+          if (this.pollInterval) return; // Already polling
+
+          this.pollingEnabled = true;
+          this.pollInterval = setInterval(() => {
+            if (this.currentFeedPath && this.accessToken) {
+              console.log("Auto-refreshing posts...");
+              this.refreshCurrentFeed(true); // Silent refresh
+            }
+          }, 120000); // Poll every 2 minutes
+
+          this.updatePollingButton();
+        }
+
+        stopPolling() {
+          if (this.pollInterval) {
+            clearInterval(this.pollInterval);
+            this.pollInterval = null;
+          }
+          this.pollingEnabled = false;
+          this.updatePollingButton();
+        }
+
+        togglePolling() {
+          if (this.pollingEnabled) {
+            this.stopPolling();
+          } else {
+            this.startPolling();
+          }
+        }
+
+        updatePollingButton() {
+          const btn = document.getElementById("toggle-polling-btn");
+          if (btn) {
+            btn.textContent = this.pollingEnabled
+              ? "Stop Auto-refresh"
+              : "Auto-refresh";
+            btn.className = this.pollingEnabled
+              ? "btn btn-secondary"
+              : "btn btn-primary";
+          }
+        }
+
+        async refreshCurrentFeed(silent = false) {
+          if (!this.currentFeedPath || !this.accessToken) return;
+
+          if (!silent) {
+            this.showPostsLoading("Refreshing posts...");
+          }
+
+          try {
+            const cleanPath = this.currentFeedPath.startsWith("/")
+              ? this.currentFeedPath.slice(1)
+              : this.currentFeedPath;
+            const jsonPath = cleanPath.endsWith(".json")
+              ? cleanPath
+              : cleanPath + ".json";
+
+            const response = await fetch(
+              `${this.backendUrl}/api/reddit/${jsonPath}`,
+              {
+                headers: {
+                  Authorization: "Bearer " + this.accessToken,
+                },
+              },
+            );
+
+            if (!response.ok) {
+              throw new Error("Failed to fetch posts");
+            }
+
+            const data = await response.json();
+            this.displayPosts(data.data.children);
+            this.lastUpdateTime = new Date();
+            this.updateLastRefreshTime();
+
+            if (!silent) {
+              // Show brief success message
+              const postsList = document.getElementById("posts-list");
+              const successMsg = document.createElement("div");
+              successMsg.style.cssText =
+                "position: fixed; top: 20px; right: 20px; background: #28a745; color: white; padding: 0.5rem 1rem; border-radius: 4px; z-index: 1000;";
+              successMsg.textContent = "Posts refreshed!";
+              document.body.appendChild(successMsg);
+              setTimeout(() => successMsg.remove(), 2000);
+            }
+          } catch (error) {
+            if (!silent) {
+              this.showPostsError("Failed to refresh posts: " + error.message);
+            }
+            console.error("Auto-refresh failed:", error);
+          }
+        }
+
+        updateLastRefreshTime() {
+          const timeElement = document.getElementById("last-refresh-time");
+          if (timeElement && this.lastUpdateTime) {
+            const timeStr = this.lastUpdateTime.toLocaleTimeString();
+            timeElement.textContent = `Last updated: ${timeStr}`;
+          }
+        }
+
+        useDemoMode() {
+          console.log("Entering demo mode...");
+          // Create a demo feeds display
+          this.displayDemoFeeds();
+        }
+
+        displayDemoFeeds() {
+          const feedsList = document.getElementById("feeds-list");
+          feedsList.innerHTML = `
+                          <div class="feed-item" onclick="redditClient.displayDemoPosts('tech', 'Tech News')">
+                              <div class="feed-name">Tech News</div>
+                              <div class="feed-details">5 subreddits</div>
+                          </div>
+                          <div class="feed-item" onclick="redditClient.displayDemoPosts('programming', 'Programming')">
+                              <div class="feed-name">Programming</div>
+                              <div class="feed-details">8 subreddits</div>
+                          </div>
+                          <div class="feed-item" onclick="redditClient.displayDemoPosts('science', 'Science & Research')">
+                              <div class="feed-name">Science & Research</div>
+                              <div class="feed-details">6 subreddits</div>
+                          </div>
+                          <div style="margin-top: 1rem; padding: 1rem; background: #e7f3ff; border-radius: 6px; font-size: 0.875rem;">
+                              <strong>Demo Mode:</strong> This is showing sample data. In production, you'd need a backend server to handle Reddit OAuth properly.
+                          </div>
+                      `;
+        }
+
+        displayDemoPosts(category, feedName) {
+          this.showPostsSection(feedName);
+
+          const demoPosts = {
+            tech: [
+              {
+                title: "New AI breakthrough announced",
+                subreddit: "technology",
+                ups: 1250,
+                comments: 89,
+              },
+              {
+                title: "Major security vulnerability found",
+                subreddit: "cybersecurity",
+                ups: 892,
+                comments: 156,
+              },
+              {
+                title: "Latest smartphone reviews",
+                subreddit: "gadgets",
+                ups: 654,
+                comments: 234,
+              },
+            ],
+            programming: [
+              {
+                title: "Best practices for React development",
+                subreddit: "reactjs",
+                ups: 987,
+                comments: 145,
+              },
+              {
+                title: "Python 3.12 new features",
+                subreddit: "python",
+                ups: 1456,
+                comments: 298,
+              },
+              {
+                title: "Database optimization tips",
+                subreddit: "programming",
+                ups: 789,
+                comments: 167,
+              },
+            ],
+            science: [
+              {
+                title: "Mars rover discovers new evidence",
+                subreddit: "space",
+                ups: 2341,
+                comments: 456,
+              },
+              {
+                title: "Climate change research update",
+                subreddit: "science",
+                ups: 1789,
+                comments: 234,
+              },
+              {
+                title: "Medical breakthrough in cancer treatment",
+                subreddit: "medicine",
+                ups: 3456,
+                comments: 567,
+              },
+            ],
+          };
+
+          const posts = demoPosts[category] || demoPosts.tech;
+          const postsList = document.getElementById("posts-list");
+
+          postsList.innerHTML = posts
+            .map(
+              (post) => `
+                          <div class="post-item">
+                              <div class="post-title">${post.title}</div>
+                              <div class="post-meta">
+                                  r/${post.subreddit} • ${post.ups} upvotes • ${post.comments} comments
+                              </div>
+                              <div class="post-content" style="color: #999; font-style: italic;">Demo post - click to view on Reddit</div>
+                          </div>
+                      `,
+            )
+            .join("");
+        }
+      }
+
+      // Initialize the Reddit client when page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        redditClient = new RedditClient();
+      });
+    </script>
+  </body>
+</html>
