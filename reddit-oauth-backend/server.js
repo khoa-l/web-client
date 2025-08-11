@@ -14,7 +14,7 @@ const REDDIT_CONFIG = {
   clientId: process.env.REDDIT_CLIENT_ID || "i3It5V7LR6o2s5BCTy-82A", // Replace with your Reddit app client ID
   clientSecret:
     process.env.REDDIT_CLIENT_SECRET || "6m2RxtVnEPLTVBePLSZULLxCiA_GJA", // Replace with your Reddit app secret
-  redirectUri: process.env.REDDIT_REDIRECT_URI || "http://localhost:3000", // Your frontend URL
+  redirectUri: process.env.REDDIT_REDIRECT_URI || "http://192.168.1.79:3000", // Your frontend URL
   userAgent: "RedditClient/1.0 by YourUsername", // Change 'YourUsername' to your actual Reddit username
 };
 
