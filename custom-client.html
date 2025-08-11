@@ -252,6 +252,33 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
       }
 
+      .post-item {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-left: 3px solid #ff4500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        gap: 1rem;
+      }
+
+      .post-content-wrapper {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .post-thumbnail {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 6px;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+
       @media (max-width: 768px) {
         .container {
           padding: 1rem 0.5rem;
@@ -590,12 +617,18 @@
 
           try {
             // Remove leading slash if present and add .json
-            const cleanPath = feedPath.startsWith("/")
-              ? feedPath.slice(1)
-              : feedPath;
-            const jsonPath = cleanPath.endsWith(".json")
-              ? cleanPath
-              : cleanPath + ".json";
+            let jsonPath;
+            if (!feedPath || feedPath === "") {
+              // Home feed
+              jsonPath = ".json";
+            } else {
+              const cleanPath = feedPath.startsWith("/")
+                ? feedPath.slice(1)
+                : feedPath;
+              jsonPath = cleanPath.endsWith(".json")
+                ? cleanPath
+                : cleanPath + ".json";
+            }
 
             const response = await fetch(
               `${this.backendUrl}/api/reddit/${jsonPath}`,
@@ -623,31 +656,86 @@
           const feedsList = document.getElementById("feeds-list");
           feedsList.innerHTML = "";
 
-          if (!feeds || feeds.length === 0) {
-            feedsList.innerHTML =
-              '<div class="no-feeds"><p>No custom feeds found. Create some multireddits on Reddit first!</p></div>';
-            return;
-          }
+          // Add default feeds first
+          const defaultFeeds = [
+            { name: "Home", path: "", description: "Your personalized feed" },
+            {
+              name: "Popular",
+              path: "r/popular",
+              description: "Popular posts across Reddit",
+            },
+            {
+              name: "All",
+              path: "r/all",
+              description: "All posts from Reddit",
+            },
+          ];
 
-          feeds.forEach((feed) => {
+          defaultFeeds.forEach((feed) => {
             const feedItem = document.createElement("div");
             feedItem.className = "feed-item";
-
-            // Decode HTML entities in feed name and description
-            const feedName = this.decodeHtml(feed.data.display_name);
-            const subredditCount = feed.data.subreddits.length;
-
             feedItem.innerHTML = `
-                              <div class="feed-name">${feedName}</div>
-                              <div class="feed-details">${subredditCount} subreddits</div>
-                          `;
+      <div class="feed-name">${feed.name}</div>
+      <div class="feed-details">${feed.description}</div>
+    `;
 
             feedItem.addEventListener("click", () => {
-              this.loadFeedPosts(feed.data.path, feedName);
+              this.loadFeedPosts(feed.path, feed.name);
             });
 
             feedsList.appendChild(feedItem);
           });
+
+          // Add separator if there are custom feeds
+          if (feeds && feeds.length > 0) {
+            const separator = document.createElement("div");
+            separator.style.cssText =
+              "margin: 1.5rem 0 1rem 0; padding-top: 1rem; border-top: 1px solid #e9ecef;";
+            separator.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h4 style="color: #1a1a1b; margin: 0;">Custom Feeds</h4>
+        <a href="https://www.reddit.com/subreddits/mine/multi" target="_blank" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.5rem 0.75rem;">
+          Manage Feeds
+        </a>
+      </div>
+    `;
+            feedsList.appendChild(separator);
+
+            // Add custom feeds
+            feeds.forEach((feed) => {
+              const feedItem = document.createElement("div");
+              feedItem.className = "feed-item";
+
+              const feedName = this.decodeHtml(feed.data.display_name);
+              const subredditCount = feed.data.subreddits.length;
+
+              feedItem.innerHTML = `
+        <div class="feed-name">${feedName}</div>
+        <div class="feed-details">${subredditCount} subreddits</div>
+      `;
+
+              feedItem.addEventListener("click", () => {
+                this.loadFeedPosts(feed.data.path, feedName);
+              });
+
+              feedsList.appendChild(feedItem);
+            });
+          } else {
+            // Show manage feeds link even when no custom feeds exist
+            const noCustomFeeds = document.createElement("div");
+            noCustomFeeds.style.cssText =
+              "margin: 1.5rem 0 1rem 0; padding-top: 1rem; border-top: 1px solid #e9ecef; text-align: center;";
+            noCustomFeeds.innerHTML = `
+      <div style="color: #666; margin-bottom: 1rem;">
+        <p>No custom feeds found.</p>
+        <p style="font-size: 0.875rem;">Create multireddits to organize your favorite subreddits!</p>
+      </div>
+      <a href="https://www.reddit.com/subreddits/mine/multi" target="_blank" class="btn btn-primary">
+        Create & Manage Feeds
+      </a>
+    `;
+            feedsList.appendChild(noCustomFeeds);
+          }
         }
 
         displayPosts(posts) {
@@ -671,19 +759,49 @@
               ? this.decodeHtml(postData.selftext)
               : "";
 
-            const postContent = selftext
-              ? `<div class="post-content">${selftext.substring(0, 200)}${
-                  selftext.length > 200 ? "..." : ""
-                }</div>`
-              : "";
+            let postContent = "";
+            let imageContent = "";
+
+            // Handle images
+            if (
+              postData.preview &&
+              postData.preview.images &&
+              postData.preview.images[0]
+            ) {
+              const imageUrl = postData.preview.images[0].source.url.replace(
+                /&amp;/g,
+                "&",
+              );
+              imageContent = `<img src="${imageUrl}" class="post-thumbnail" onclick="event.stopPropagation(); window.open('${imageUrl}', '_blank')" alt="Post image">`;
+            } else if (
+              postData.url &&
+              (postData.url.match(/\.(jpeg|jpg|gif|png)$/i) ||
+                postData.domain === "i.redd.it")
+            ) {
+              imageContent = `<img src="${postData.url}" class="post-thumbnail" onclick="window.open('${postData.url}', '_blank')" alt="Post image">`;
+            }
+
+            // Handle text content
+            if (selftext) {
+              postContent = `<div class="post-content">${selftext.substring(
+                0,
+                200,
+              )}${selftext.length > 200 ? "..." : ""}</div>`;
+            }
+
+            // Combine content
+            const contentHtml = imageContent + postContent;
 
             postItem.innerHTML = `
-                              <div class="post-title">${title}</div>
-                              <div class="post-meta">
-                                  r/${postData.subreddit} • ${postData.ups} upvotes • ${postData.num_comments} comments
-                              </div>
-                              ${postContent}
-                          `;
+              <div class="post-content-wrapper">
+                <div class="post-title">${title}</div>
+                <div class="post-meta">
+                  r/${postData.subreddit} • ${postData.ups} upvotes • ${postData.num_comments} comments
+                </div>
+                ${postContent}
+              </div>
+  ${imageContent}
+`;
 
             postItem.addEventListener("click", () => {
               window.open(`https://reddit.com${postData.permalink}`, "_blank");
@@ -866,23 +984,42 @@
 
         displayDemoFeeds() {
           const feedsList = document.getElementById("feeds-list");
-          feedsList.innerHTML = `
-                          <div class="feed-item" onclick="redditClient.displayDemoPosts('tech', 'Tech News')">
-                              <div class="feed-name">Tech News</div>
-                              <div class="feed-details">5 subreddits</div>
-                          </div>
-                          <div class="feed-item" onclick="redditClient.displayDemoPosts('programming', 'Programming')">
-                              <div class="feed-name">Programming</div>
-                              <div class="feed-details">8 subreddits</div>
-                          </div>
-                          <div class="feed-item" onclick="redditClient.displayDemoPosts('science', 'Science & Research')">
-                              <div class="feed-name">Science & Research</div>
-                              <div class="feed-details">6 subreddits</div>
-                          </div>
-                          <div style="margin-top: 1rem; padding: 1rem; background: #e7f3ff; border-radius: 6px; font-size: 0.875rem;">
-                              <strong>Demo Mode:</strong> This is showing sample data. In production, you'd need a backend server to handle Reddit OAuth properly.
-                          </div>
-                      `;
+          feedsList.innerHTML = `<div class="feed-item" onclick="redditClient.displayDemoPosts('home', 'Home')">
+            <div class="feed-name">Home</div>
+            <div class="feed-details">Your personalized feed</div>
+          </div>
+          <div class="feed-item" onclick="redditClient.displayDemoPosts('popular', 'Popular')">
+        <div class="feed-name">Popular</div>
+        <div class="feed-details">Popular posts across Reddit</div>
+    </div>
+    <div class="feed-item" onclick="redditClient.displayDemoPosts('all', 'All')">
+        <div class="feed-name">All</div>
+        <div class="feed-details">All posts from Reddit</div>
+    </div>
+    <div style="margin: 1.5rem 0 1rem 0; padding-top: 1rem; border-top: 1px solid #e9ecef;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h4 style="color: #1a1a1b; margin: 0;">Custom Feeds</h4>
+        <a href="https://www.reddit.com/subreddits/mine/multi" target="_blank" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.5rem 0.75rem;">
+          Manage Feeds
+        </a>
+      </div>
+      <div class="feed-item" onclick="redditClient.displayDemoPosts('tech', 'Tech News')">
+          <div class="feed-name">Tech News</div>
+          <div class="feed-details">5 subreddits</div>
+      </div>
+      <div class="feed-item" onclick="redditClient.displayDemoPosts('programming', 'Programming')">
+          <div class="feed-name">Programming</div>
+          <div class="feed-details">8 subreddits</div>
+      </div>
+      <div class="feed-item" onclick="redditClient.displayDemoPosts('science', 'Science & Research')">
+          <div class="feed-name">Science & Research</div>
+          <div class="feed-details">6 subreddits</div>
+      </div>
+    </div>
+    <div style="margin-top: 1rem; padding: 1rem; background: #e7f3ff; border-radius: 6px; font-size: 0.875rem;">
+        <strong>Demo Mode:</strong> This is showing sample data. In production, you'd need a backend server to handle Reddit OAuth properly.
+    </div>
+  `;
         }
 
         displayDemoPosts(category, feedName) {
