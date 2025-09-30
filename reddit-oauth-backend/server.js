@@ -174,18 +174,18 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Reddit OAuth Backend Server running on port ${PORT}`);
-  console.log(`📍 Server URL: http://localhost:${PORT}`);
+  console.log(` Reddit OAuth Backend Server running on port ${PORT}`);
+  console.log(` Server URL: http://localhost:${PORT}`);
   console.log(
     `🔧 Configure your Reddit app redirect URI to: ${REDDIT_CONFIG.redirectUri}`,
   );
   console.log(
     `📋 Set REDDIT_CLIENT_ID environment variable or update the code`,
   );
-  console.log(`\n📖 API Endpoints:`);
+  console.log(`\n API Endpoints:`);
   console.log(`   POST /oauth/token - Exchange OAuth code for token`);
   console.log(`   GET /api/reddit/* - Proxy Reddit API calls`);
-  console.log(`\n🌐 Test the server: http://localhost:${PORT}`);
+  console.log(`\n Test the server: http://localhost:${PORT}`);
 });
 
 module.exports = app;
